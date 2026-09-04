@@ -1,0 +1,7 @@
+# 🧩 overlays/dev/kustomization.yaml — STUB. No working config.
+# TODO(student): patch the base for the "dev" environment.
+# HINTS:
+#   - What differs in dev? (image tags, replica counts, resource sizes, ingress
+#     host, log level, whether HPA is on...)
+#   - Keep secrets OUT of here. How will dev get its real secrets at deploy time?
+#   - dev: think single replicas, smaller resources, faster feedback.

@@ -1,0 +1,4 @@
+# 🧩 Redis (event broker) — STUB. No working YAML.
+# TODO(student): Deployment/StatefulSet + Service for Redis.
+# HINTS: Does the event stream need to survive a restart? If yes, what storage?
+#        If a consumer is down, do Redis Streams retain messages? (compare to Pub/Sub)

@@ -1,0 +1,16 @@
+{
+  "name": "cloudvault-notification-service",
+  "version": "1.0.0",
+  "description": "CloudVault notification-service: consumes events, stores notifications, serves GET /notifications.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ioredis": "^5.4.1",
+    "pg": "^8.12.0"
+  }
+}

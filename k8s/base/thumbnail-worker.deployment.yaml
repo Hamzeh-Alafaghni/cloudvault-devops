@@ -1,0 +1,13 @@
+# 🧩 thumbnail-worker — Deployment + Service. STUB (your graded work). No working YAML here.
+#
+# TODO(student): write a Deployment and a Service for "thumbnail-worker".
+# REQUIREMENTS / HINTS (questions, not answers):
+#   - What image? (the one CI pushes to GHCR). How is the tag chosen per environment?
+#   - Liveness probe -> GET /healthz ; Readiness probe -> GET /readyz. Why two?
+#     What should each probe's failureThreshold / timing be, and what happens to
+#     traffic when readiness fails but liveness passes?
+#   - Config via ConfigMap, secrets via Secret — NEVER hard-code either in here.
+#   - Requests/limits: what does this service actually need? What breaks if you omit them?
+#   - Replicas: which services are stateless and safe to scale? (thumbnail-worker
+#     is a queue consumer — does adding replicas just work? why/why not?)
+#   - This one has NO inbound Service — it's an event consumer. Probe its health port only.

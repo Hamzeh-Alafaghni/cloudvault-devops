@@ -1,0 +1,23 @@
+# =============================================================================
+# backend.tf.example — copy to backend.tf and configure remote state.
+# (backend.tf is git-ignored; NEVER commit real state or state config values
+#  that include secrets.)
+# =============================================================================
+# TODO(student): configure a REMOTE, LOCKING backend for Terraform state.
+#
+# HINTS (questions):
+#   - Why is local state dangerous for team work and for CI? What two properties
+#     does a good backend give you (durability + locking)?
+#   - For an S3-based backend: what stores the state, and what provides the lock?
+#   - How do you keep state out of Git even by accident? (see .gitignore)
+#   - For $0 practice you can validate a backend against LocalStack before AWS.
+#
+# terraform {
+#   backend "s3" {
+#     # bucket         = "..."      # TODO
+#     # key            = "..."      # TODO
+#     # region         = "..."      # TODO
+#     # dynamodb_table = "..."      # TODO: what is this for?
+#     # encrypt        = true
+#   }
+# }

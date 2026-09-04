@@ -1,0 +1,57 @@
+# =============================================================================
+# 🧩 CI — SKELETON ONLY (your graded work). This does NOT build/test/scan yet.
+# =============================================================================
+# Every step below is a placeholder. Replace the `echo TODO` lines with real
+# steps. The pipeline is set to manual (workflow_dispatch) so it does not spam
+# failed runs before you implement it — wire up the real triggers when ready.
+#
+# TARGET PIPELINE:  lint  ->  test  ->  build  ->  Trivy scan  ->  push to GHCR
+#
+# HINTS (questions, not answers):
+#   - What should trigger CI? (pushes to which branches? pull requests? tags?)
+#   - How do you test 7 services efficiently — a matrix over the services dir?
+#   - Where does the image registry live and how does the workflow authenticate
+#     to GHCR without a long-lived PAT? (hint: the built-in GITHUB_TOKEN + packages: write)
+#   - What makes a Trivy scan FAIL the build (severity threshold)? Should it block
+#     merges? What's your policy for accepted vs. must-fix findings?
+#   - How do you tag images so a human can trace an image back to a commit?
+# =============================================================================
+name: ci
+
+on:
+  workflow_dispatch: {}
+  # TODO(student): enable real triggers, e.g.
+  # push:
+  #   branches: [ main ]
+  # pull_request:
+  #   branches: [ main ]
+
+# TODO(student): set least-privilege permissions (contents: read, packages: write ...).
+# permissions:
+#   contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "TODO(student): checkout, set up Node, run the linter/format check"
+      - run: exit 1  # remove once implemented
+
+  test:
+    runs-on: ubuntu-latest
+    # TODO(student): matrix over the services so each test suite runs in parallel.
+    # strategy:
+    #   matrix:
+    #     service: [gateway, auth-service, files-service, upload-service, thumbnail-worker, notification-service]
+    steps:
+      - run: echo "TODO(student): checkout, npm ci, npm test for each service (see Makefile 'test')"
+      - run: exit 1
+
+  build-and-scan:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - run: echo "TODO(student): docker build each service image"
+      - run: echo "TODO(student): scan the image with Trivy; fail on HIGH/CRITICAL per your policy"
+      - run: echo "TODO(student): log in to GHCR and push images tagged by commit SHA"
+      - run: exit 1

@@ -1,0 +1,42 @@
+# =============================================================================
+# 🧩 CD — SKELETON ONLY (your graded work). This does NOT deploy anything yet.
+# =============================================================================
+# Continuous Delivery/Deployment: take the images CI produced and roll them out,
+# with a way to VERIFY the rollout and ROLL BACK if it's bad.
+#
+# TARGET PIPELINE:  (on a green CI) -> deploy to the cluster -> smoke test -> (auto rollback on failure)
+#
+# HINTS (questions, not answers):
+#   - What should trigger a deploy? (a tag? a push to main? manual approval for prod?)
+#   - How does the workflow get cluster credentials safely? (a Secret / OIDC — never
+#     a plaintext kubeconfig in the repo.)
+#   - How do you deploy — `kubectl apply -k`, Helm, or a GitOps controller (Argo/Flux)?
+#     What are the trade-offs?
+#   - How do you know the deploy SUCCEEDED before sending users to it? (rollout status
+#     + a smoke test against /healthz and a real request path.)
+#   - How do you ROLL BACK automatically when the smoke test fails? (kubectl rollout undo,
+#     Helm rollback, or a previous-good revision.) This is a required capability.
+#   - Environments & approvals: should prod require a manual gate?
+# =============================================================================
+name: cd
+
+on:
+  workflow_dispatch: {}
+  # TODO(student): enable real triggers, e.g. after CI succeeds on main, or on a tag.
+  # workflow_run:
+  #   workflows: [ci]
+  #   types: [completed]
+
+# TODO(student): scope permissions; use environments with required reviewers for prod.
+# environment: production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "TODO(student): authenticate to the target cluster (no plaintext kubeconfig)"
+      - run: echo "TODO(student): deploy the new images (kubectl -k / Helm / GitOps)"
+      - run: echo "TODO(student): wait for rollout status to be healthy"
+      - run: echo "TODO(student): smoke test (hit the Ingress: register -> upload -> download)"
+      - run: echo "TODO(student): on failure, roll back to the previous good revision"
+      - run: exit 1  # remove once implemented

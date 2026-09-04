@@ -1,0 +1,208 @@
+# =============================================================================
+# CloudVault — local development stack
+# =============================================================================
+# `docker compose up --build` brings up the ENTIRE system with zero cloud deps:
+#   7 app services + 2 Postgres instances + Redis + LocalStack (S3).
+# Run `./scripts/seed.sh` (or `make seed`) afterwards to create the bucket and
+# a demo user. See README.md for the data-flow diagram.
+#
+# NOTE (student): this file is intentionally "dev-grade". Production concerns
+# (resource limits, restart policies, secrets management, read-only rootfs,
+# pinned image digests) are part of your hardening work — see docs/HINTS.md.
+# =============================================================================
+
+name: cloudvault
+
+x-node-health: &node-health
+  interval: 10s
+  timeout: 3s
+  retries: 10
+  start_period: 20s
+
+networks:
+  cloudvault:
+    driver: bridge
+
+volumes:
+  auth-db-data:
+  files-db-data:
+  localstack-data:
+
+services:
+  # ------------------------------------------------------------------ data ---
+  auth-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${AUTH_DB_USER:-auth}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:-authpass}
+      POSTGRES_DB: ${AUTH_DB_NAME:-authdb}
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_DB_USER:-auth} -d ${AUTH_DB_NAME:-authdb}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [cloudvault]
+
+  files-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${FILES_DB_USER:-files}
+      POSTGRES_PASSWORD: ${FILES_DB_PASSWORD:-filespass}
+      POSTGRES_DB: ${FILES_DB_NAME:-filesdb}
+    volumes:
+      - files-db-data:/var/lib/postgresql/data
+      - ./scripts/postgres-init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${FILES_DB_USER:-files} -d ${FILES_DB_NAME:-filesdb}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [cloudvault]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [cloudvault]
+
+  localstack:
+    image: localstack/localstack:3
+    environment:
+      SERVICES: s3
+      DEBUG: "0"
+      PERSISTENCE: "1"
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack-data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4566/_localstack/health | grep -q '\"s3\": \"available\"' || curl -fsS http://localhost:4566/_localstack/health"]
+      interval: 8s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    networks: [cloudvault]
+
+  # -------------------------------------------------------------- services ---
+  auth-service:
+    build: ./services/auth-service
+    env_file: [.env]
+    environment:
+      PORT: "3001"
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3001/healthz || exit 1"]
+      <<: *node-health
+    networks: [cloudvault]
+
+  files-service:
+    build: ./services/files-service
+    env_file: [.env]
+    environment:
+      PORT: "3002"
+    depends_on:
+      files-db:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3002/healthz || exit 1"]
+      <<: *node-health
+    networks: [cloudvault]
+
+  upload-service:
+    build: ./services/upload-service
+    env_file: [.env]
+    environment:
+      PORT: "3003"
+    depends_on:
+      files-service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3003/healthz || exit 1"]
+      <<: *node-health
+    networks: [cloudvault]
+
+  notification-service:
+    build: ./services/notification-service
+    env_file: [.env]
+    environment:
+      PORT: "3004"
+    depends_on:
+      files-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3004/healthz || exit 1"]
+      <<: *node-health
+    networks: [cloudvault]
+
+  thumbnail-worker:
+    build: ./services/thumbnail-worker
+    env_file: [.env]
+    environment:
+      PORT: "3005"   # health-only endpoint; the worker itself is event-driven
+    depends_on:
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      files-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3005/healthz || exit 1"]
+      <<: *node-health
+    networks: [cloudvault]
+
+  gateway:
+    build: ./services/gateway
+    env_file: [.env]
+    environment:
+      PORT: "8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      files-service:
+        condition: service_healthy
+      upload-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz || exit 1"]
+      <<: *node-health
+    networks: [cloudvault]
+
+  # ------------------------------------------------------------------- web ---
+  web:
+    build: ./web
+    env_file: [.env]
+    environment:
+      VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8080}
+    ports:
+      - "5173:5173"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks: [cloudvault]

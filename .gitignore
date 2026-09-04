@@ -1,0 +1,52 @@
+# ---- Secrets & env ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+credentials
+*credentials*
+.aws/
+
+# ---- Terraform ----
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+.terraform.lock.hcl
+crash.log
+override.tf
+override.tf.json
+backend.tf
+!backend.tf.example
+
+# ---- Node ----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# ---- Docker / local data ----
+.localstack/
+localstack-data/
+pgdata/
+*.log
+
+# ---- Kubernetes ----
+kubeconfig
+*.kubeconfig
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

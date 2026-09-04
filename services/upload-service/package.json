@@ -1,0 +1,17 @@
+{
+  "name": "cloudvault-upload-service",
+  "version": "1.0.0",
+  "description": "CloudVault upload-service: streams uploads to S3, records metadata, publishes file.uploaded.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.637.0",
+    "express": "^4.19.2",
+    "ioredis": "^5.4.1",
+    "multer": "^1.4.5-lts.1"
+  }
+}

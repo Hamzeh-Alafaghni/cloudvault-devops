@@ -1,0 +1,4 @@
+# 🧩 base/kustomization.yaml — STUB. No working config.
+# TODO(student): list the base resources here once you've written them.
+# HINTS: what is the point of a base + overlays split? What stays in base (shape)
+#        vs. what an overlay patches (replicas, images, env, ingress host)?

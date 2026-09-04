@@ -1,0 +1,7 @@
+# 🧩 overlays/prod/kustomization.yaml — STUB. No working config.
+# TODO(student): patch the base for the "prod" environment.
+# HINTS:
+#   - What differs in prod? (image tags, replica counts, resource sizes, ingress
+#     host, log level, whether HPA is on...)
+#   - Keep secrets OUT of here. How will prod get its real secrets at deploy time?
+#   - prod: think replicas, HPA, PodDisruptionBudgets, stricter limits.

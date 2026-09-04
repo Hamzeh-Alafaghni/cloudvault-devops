@@ -1,0 +1,10 @@
+# 🧩 Postgres (auth-db / files-db) — STUB (your graded work). No working YAML.
+#
+# TODO(student): run the databases with durable storage.
+# REQUIREMENTS / HINTS:
+#   - Stateful data needs a PVC (PersistentVolumeClaim). Deployment or StatefulSet — which,
+#     and why? What guarantees does a StatefulSet give a database that a Deployment doesn't?
+#   - Where do credentials come from? (a Secret — not the manifest, not an image).
+#   - database-per-service: do you run one instance per DB, or one instance many DBs?
+#     What are the blast-radius / cost trade-offs? (tie back to ARCHITECTURE_CHALLENGE.md)
+#   - Backups: the CronJob below must be able to reach these.

@@ -1,0 +1,4 @@
+# 🧩 ConfigMap — STUB. No working YAML.
+# TODO(student): non-secret config (service URLs, bucket name, region, stream name...).
+# HINTS: what belongs in a ConfigMap vs. a Secret? What changes per environment
+#        (dev vs prod) and therefore belongs in an overlay, not here?

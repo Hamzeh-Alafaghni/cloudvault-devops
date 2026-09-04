@@ -1,0 +1,16 @@
+{
+  "name": "cloudvault-gateway",
+  "version": "1.0.0",
+  "description": "CloudVault gateway: single public entry point, JWT validation, reverse proxy to services.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "http-proxy-middleware": "2.0.6",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
