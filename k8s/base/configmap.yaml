@@ -1,4 +1,30 @@
-# 🧩 ConfigMap — STUB. No working YAML.
-# TODO(student): non-secret config (service URLs, bucket name, region, stream name...).
-# HINTS: what belongs in a ConfigMap vs. a Secret? What changes per environment
-#        (dev vs prod) and therefore belongs in an overlay, not here?
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudvault-config
+data:
+  AUTH_DB_HOST: "auth-db"
+  AUTH_DB_PORT: "5432"
+  AUTH_DB_USER: "auth"
+  AUTH_DB_NAME: "authdb"
+  FILES_DB_HOST: "files-db"
+  FILES_DB_PORT: "5432"
+  FILES_DB_USER: "files"
+  FILES_DB_NAME: "filesdb"
+  NOTIF_DB_HOST: "files-db"
+  NOTIF_DB_PORT: "5432"
+  NOTIF_DB_USER: "files"
+  NOTIF_DB_NAME: "notifdb"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_STREAM: "cloudvault:events"
+  S3_ENDPOINT: "http://localstack.default.svc.cluster.local:4566"
+  S3_PUBLIC_ENDPOINT: "http://localhost:4566"
+  S3_REGION: "us-east-1"
+  S3_BUCKET: "cloudvault"
+  S3_FORCE_PATH_STYLE: "true"
+  AUTH_SERVICE_URL: "http://auth-service:3001"
+  FILES_SERVICE_URL: "http://files-service:3002"
+  UPLOAD_SERVICE_URL: "http://upload-service:3003"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:3004"
+  GATEWAY_PORT: "8080"

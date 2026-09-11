@@ -1,7 +1,17 @@
-# 🧩 Ingress — STUB. No working YAML.
-# TODO(student): expose ONLY the gateway to the outside world.
-# HINTS:
-#   - The gateway is the single public entry point (mirror of the cloud load balancer).
-#     Which Service should the Ingress route to? Should any other service be public?
-#   - What Ingress controller will you run on kind/k3d? (e.g. ingress-nginx / Traefik)
-#   - Stretch: TLS. Where do certs come from locally vs. in the cloud?
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cloudvault-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 8080

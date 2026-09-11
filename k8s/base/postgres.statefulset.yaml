@@ -1,10 +1,115 @@
-# 🧩 Postgres (auth-db / files-db) — STUB (your graded work). No working YAML.
-#
-# TODO(student): run the databases with durable storage.
-# REQUIREMENTS / HINTS:
-#   - Stateful data needs a PVC (PersistentVolumeClaim). Deployment or StatefulSet — which,
-#     and why? What guarantees does a StatefulSet give a database that a Deployment doesn't?
-#   - Where do credentials come from? (a Secret — not the manifest, not an image).
-#   - database-per-service: do you run one instance per DB, or one instance many DBs?
-#     What are the blast-radius / cost trade-offs? (tie back to ARCHITECTURE_CHALLENGE.md)
-#   - Backups: the CronJob below must be able to reach these.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: auth-db
+spec:
+  serviceName: "auth-db"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-db
+  template:
+    metadata:
+      labels:
+        app: auth-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: cloudvault-config
+              key: AUTH_DB_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloudvault-secret
+              key: AUTH_DB_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: cloudvault-config
+              key: AUTH_DB_NAME
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: auth-db-data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: auth-db-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-db
+spec:
+  ports:
+  - port: 5432
+  selector:
+    app: auth-db
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: files-db
+spec:
+  serviceName: "files-db"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: files-db
+  template:
+    metadata:
+      labels:
+        app: files-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: cloudvault-config
+              key: FILES_DB_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloudvault-secret
+              key: FILES_DB_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: cloudvault-config
+              key: FILES_DB_NAME
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: files-db-data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: files-db-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: files-db
+spec:
+  ports:
+  - port: 5432
+  selector:
+    app: files-db

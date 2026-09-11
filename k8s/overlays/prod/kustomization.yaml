@@ -1,7 +1,12 @@
-# 🧩 overlays/prod/kustomization.yaml — STUB. No working config.
-# TODO(student): patch the base for the "prod" environment.
-# HINTS:
-#   - What differs in prod? (image tags, replica counts, resource sizes, ingress
-#     host, log level, whether HPA is on...)
-#   - Keep secrets OUT of here. How will prod get its real secrets at deploy time?
-#   - prod: think replicas, HPA, PodDisruptionBudgets, stricter limits.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base
+namePrefix: prod-
+replicas:
+- name: gateway
+  count: 3
+- name: auth-service
+  count: 3
+- name: files-service
+  count: 3

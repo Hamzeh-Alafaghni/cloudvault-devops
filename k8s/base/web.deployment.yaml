@@ -1,13 +1,40 @@
-# 🧩 web — Deployment + Service. STUB (your graded work). No working YAML here.
-#
-# TODO(student): write a Deployment and a Service for "web".
-# REQUIREMENTS / HINTS (questions, not answers):
-#   - What image? (the one CI pushes to GHCR). How is the tag chosen per environment?
-#   - Liveness probe -> GET /healthz ; Readiness probe -> GET /readyz. Why two?
-#     What should each probe's failureThreshold / timing be, and what happens to
-#     traffic when readiness fails but liveness passes?
-#   - Config via ConfigMap, secrets via Secret — NEVER hard-code either in here.
-#   - Requests/limits: what does this service actually need? What breaks if you omit them?
-#   - Replicas: which services are stateless and safe to scale? (thumbnail-worker
-#     is a queue consumer — does adding replicas just work? why/why not?)
-#   - This one is reached via the Service by the gateway or the Ingress.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web
+        image: cloudvault-web:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5173
+        envFrom:
+        - configMapRef:
+            name: cloudvault-config
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  ports:
+  - port: 5173
+  selector:
+    app: web
