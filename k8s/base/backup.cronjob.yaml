@@ -1,10 +1,35 @@
-# 🧩 Backup CronJob — STUB. No working YAML.
-# TODO(student): schedule scripts/backup.sh (once you've implemented it) in-cluster.
-# REQUIREMENTS / HINTS:
-#   - What schedule meets your RPO? (see scripts/restore.sh hints)
-#   - Which Secret gives it DB access? Which identity gives it S3 write access
-#     WITHOUT long-lived keys?
-#   - How do you get alerted when a backup FAILS? (a CronJob that fails silently
-#     is worse than none.)
-#   - Acceptance: a scheduled run produces a timestamped object in the bucket, and
-#     restore.sh can bring the data back — demonstrated end-to-end.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-job
+spec:
+  schedule: "0 2 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: bitnami/postgresql:16
+            command:
+            - /bin/bash
+            - -c
+            - |
+              apt-get update && apt-get install -y awscli gzip
+              /scripts/backup.sh
+            envFrom:
+            - configMapRef:
+                name: cloudvault-config
+            - secretRef:
+                name: cloudvault-secret
+            volumeMounts:
+            - name: scripts-volume
+              mountPath: /scripts
+          volumes:
+          - name: scripts-volume
+            configMap:
+              name: scripts-configmap
+              defaultMode: 0755
+          restartPolicy: OnFailure
