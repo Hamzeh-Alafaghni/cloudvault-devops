@@ -1,7 +1,11 @@
-# TODO (student): tighten this. What else should never enter the build context?
 node_modules
 npm-debug.log
 .env
-.env.*
+.git
+.gitignore
+Dockerfile
+.dockerignore
+docs
 test
-*.md
+tests
+coverage

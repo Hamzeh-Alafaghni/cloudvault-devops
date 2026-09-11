@@ -1,12 +1,17 @@
-# =============================================================================
-# gateway — DELIBERATELY NAIVE image (works, not production-grade).
-# See services/auth-service/Dockerfile for the full hardening checklist.
-# TODO (student): multi-stage, non-root, slim base, pinned digest, npm ci.
-# =============================================================================
-FROM node:20
+# Stage 1: Builder
+FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json ./
-RUN npm install
+COPY package*.json ./
+RUN npm ci --omit=dev
 COPY . .
+
+# Stage 2: Runner
+FROM node@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+# Add curl specifically for docker-compose healthchecks
+RUN apk add --no-cache curl
+USER node
+COPY --from=builder --chown=node:node /app ./
 EXPOSE 8080
 CMD ["npm", "start"]

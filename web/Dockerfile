@@ -1,19 +1,15 @@
-# =============================================================================
-# web (React + Vite) — DELIBERATELY NAIVE image running the Vite DEV server.
-# It works and hot-reloads, but it is NOT how you ship a frontend.
-#
-# TODO (student): this is prime hardening/optimization territory.
-#   - [ ] Multi-stage build: `vite build` in a builder stage, then serve the
-#         static `dist/` from a tiny web server (nginx:alpine or similar).
-#   - [ ] Do not ship the dev server or node_modules to production.
-#   - [ ] Non-root, pinned base, .dockerignore.
-#   - Done when: the final image serves prebuilt static assets and is a fraction
-#     of this image's size.
-# =============================================================================
-FROM node:20
+# Stage 1: Builder
+FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json ./
-RUN npm install
+COPY package*.json ./
+RUN npm ci
 COPY . .
+
+# Stage 2: Runner
+FROM node@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+USER node
+COPY --from=builder --chown=node:node /app ./
 EXPOSE 5173
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
