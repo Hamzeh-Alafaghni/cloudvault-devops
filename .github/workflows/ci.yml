@@ -1,57 +1,110 @@
-# =============================================================================
-# 🧩 CI — SKELETON ONLY (your graded work). This does NOT build/test/scan yet.
-# =============================================================================
-# Every step below is a placeholder. Replace the `echo TODO` lines with real
-# steps. The pipeline is set to manual (workflow_dispatch) so it does not spam
-# failed runs before you implement it — wire up the real triggers when ready.
-#
-# TARGET PIPELINE:  lint  ->  test  ->  build  ->  Trivy scan  ->  push to GHCR
-#
-# HINTS (questions, not answers):
-#   - What should trigger CI? (pushes to which branches? pull requests? tags?)
-#   - How do you test 7 services efficiently — a matrix over the services dir?
-#   - Where does the image registry live and how does the workflow authenticate
-#     to GHCR without a long-lived PAT? (hint: the built-in GITHUB_TOKEN + packages: write)
-#   - What makes a Trivy scan FAIL the build (severity threshold)? Should it block
-#     merges? What's your policy for accepted vs. must-fix findings?
-#   - How do you tag images so a human can trace an image back to a commit?
-# =============================================================================
 name: ci
 
 on:
-  workflow_dispatch: {}
-  # TODO(student): enable real triggers, e.g.
-  # push:
-  #   branches: [ main ]
-  # pull_request:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-# TODO(student): set least-privilege permissions (contents: read, packages: write ...).
-# permissions:
-#   contents: read
+permissions:
+  contents: read
+  packages: write
 
 jobs:
-  lint:
+  test-and-lint:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: gateway
+            path: services/gateway
+          - service: auth-service
+            path: services/auth-service
+          - service: files-service
+            path: services/files-service
+          - service: upload-service
+            path: services/upload-service
+          - service: thumbnail-worker
+            path: services/thumbnail-worker
+          - service: notification-service
+            path: services/notification-service
+          - service: web
+            path: web
     steps:
-      - run: echo "TODO(student): checkout, set up Node, run the linter/format check"
-      - run: exit 1  # remove once implemented
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  test:
-    runs-on: ubuntu-latest
-    # TODO(student): matrix over the services so each test suite runs in parallel.
-    # strategy:
-    #   matrix:
-    #     service: [gateway, auth-service, files-service, upload-service, thumbnail-worker, notification-service]
-    steps:
-      - run: echo "TODO(student): checkout, npm ci, npm test for each service (see Makefile 'test')"
-      - run: exit 1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-  build-and-scan:
+      - name: Install dependencies
+        working-directory: ${{ matrix.path }}
+        run: npm ci
+
+      - name: Run linter (if present)
+        working-directory: ${{ matrix.path }}
+        run: npm run lint --if-present
+
+      - name: Run tests
+        working-directory: ${{ matrix.path }}
+        run: npm test --if-present
+
+  build-scan-push:
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [test-and-lint]
+    strategy:
+      matrix:
+        include:
+          - service: gateway
+            path: services/gateway
+          - service: auth-service
+            path: services/auth-service
+          - service: files-service
+            path: services/files-service
+          - service: upload-service
+            path: services/upload-service
+          - service: thumbnail-worker
+            path: services/thumbnail-worker
+          - service: notification-service
+            path: services/notification-service
+          - service: web
+            path: web
     steps:
-      - run: echo "TODO(student): docker build each service image"
-      - run: echo "TODO(student): scan the image with Trivy; fail on HIGH/CRITICAL per your policy"
-      - run: echo "TODO(student): log in to GHCR and push images tagged by commit SHA"
-      - run: exit 1
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t cloudvault-${{ matrix.service }}:${{ github.sha }} ./${{ matrix.path }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'cloudvault-${{ matrix.service }}:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push to GHCR
+        if: github.event_name == 'push'
+        run: |
+          # Ensure repository name is lowercase for GHCR
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_ID=ghcr.io/$REPO/cloudvault-${{ matrix.service }}
+          
+          docker tag cloudvault-${{ matrix.service }}:${{ github.sha }} $IMAGE_ID:${{ github.sha }}
+          docker tag cloudvault-${{ matrix.service }}:${{ github.sha }} $IMAGE_ID:latest
+          
+          docker push $IMAGE_ID:${{ github.sha }}
+          docker push $IMAGE_ID:latest
