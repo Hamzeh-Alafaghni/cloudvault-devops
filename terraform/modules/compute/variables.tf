@@ -1,3 +1,4 @@
-# 🧩 modules/compute/variables.tf — TODO(student).
-# Define the inputs THIS module needs. Ask: what must the caller supply, and
-# what can be derived internally? Give required vars no default.
+variable "vpc_id" { type = string }
+variable "public_subnets" { type = list(string) }
+variable "app_subnets" { type = list(string) }
+variable "instance_profile_name" { type = string }

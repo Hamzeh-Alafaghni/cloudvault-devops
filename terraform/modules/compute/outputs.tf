@@ -1,2 +1,3 @@
-# 🧩 modules/compute/outputs.tf — TODO(student).
-# Export only what OTHER modules or the root need to consume from compute.
+output "alb_dns_name" {
+  value = aws_lb.main.dns_name
+}

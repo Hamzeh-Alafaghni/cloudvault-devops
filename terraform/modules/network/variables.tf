@@ -1,3 +1,9 @@
-# 🧩 modules/network/variables.tf — TODO(student).
-# Define the inputs THIS module needs. Ask: what must the caller supply, and
-# what can be derived internally? Give required vars no default.
+variable "vpc_cidr" {
+  type    = string
+  default = "10.0.0.0/16"
+}
+
+variable "azs" {
+  type    = list(string)
+  default = ["us-east-1a", "us-east-1b"]
+}
