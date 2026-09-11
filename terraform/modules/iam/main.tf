@@ -1,18 +1,42 @@
-# =============================================================================
-# 🧩 modules/iam — least-privilege identities. TODO(student).
-# =============================================================================
-# QUESTIONS TO ANSWER IN CODE:
-#   - The services need to read/write ONE S3 bucket. What is the LEAST-privilege
-#     way to grant that? Scope actions AND the resource ARN — not "s3:*" on "*".
-#   - What should you NEVER do? (hint: bake long-lived access keys into env vars
-#     or images). What is the credential-free alternative for compute? (roles /
-#     instance profiles; on a real cluster, per-pod roles.)
-#   - Separate roles per concern: app role vs. backup role — do they need the same
-#     permissions? (No.) Why does that separation matter?
-#
-# ACCEPTANCE CRITERIA:
-#   done when: policies name specific actions + the specific bucket ARN, there are
-#   no long-lived keys anywhere, and removing any one permission breaks exactly
-#   one intended capability (proving it's minimal).
-#
-# TODO(student): implement roles, policies, and instance profiles here.
+resource "aws_iam_role" "app_role" {
+  name = "cloudvault-app-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_policy" "s3_access" {
+  name = "cloudvault-s3-access"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:ListBucket"
+      ]
+      Effect = "Allow"
+      Resource = [
+        var.bucket_arn,
+        "${var.bucket_arn}/*"
+      ]
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "app_s3" {
+  role       = aws_iam_role.app_role.name
+  policy_arn = aws_iam_policy.s3_access.arn
+}
+
+resource "aws_iam_instance_profile" "app_profile" {
+  name = "cloudvault-app-profile"
+  role = aws_iam_role.app_role.name
+}

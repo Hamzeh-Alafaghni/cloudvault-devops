@@ -1,2 +1,7 @@
-# 🧩 modules/storage/outputs.tf — TODO(student).
-# Export only what OTHER modules or the root need to consume from storage.
+output "bucket_name" {
+  value = aws_s3_bucket.main.id
+}
+
+output "bucket_arn" {
+  value = aws_s3_bucket.main.arn
+}

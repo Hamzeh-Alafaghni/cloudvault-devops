@@ -1,23 +1,41 @@
-# =============================================================================
-# 🧩 terraform/main.tf — ROOT MODULE SKELETON (your graded work).
-# =============================================================================
-# There are NO working resources in this directory on purpose. Your job is to
-# design and implement the AWS architecture described in
-# docs/ARCHITECTURE_CHALLENGE.md, wiring the modules below together.
-#
-# TODO(student): compose the modules. A sketch of the intended wiring:
-#
-#   module "network" { source = "./modules/network"  ...inputs... }
-#   module "iam"     { source = "./modules/iam"      ...inputs... }
-#   module "storage" { source = "./modules/storage"  ...inputs... }
-#   module "compute" { source = "./modules/compute"  ...inputs... }
-#
-# HINTS (do not turn these into copied answers):
-#   - What is the dependency order between these modules? What must exist before
-#     compute can launch (subnets? security groups? an instance profile?)
-#   - Keep the ROOT module thin: it wires modules + passes variables. Real
-#     resources live inside the modules.
-#   - Cost guardrail: everything here must fit AWS Free Tier OR be validated
-#     against LocalStack. Do NOT introduce Amazon EKS — its control plane is not
-#     free. Use kind/k3d locally for the Kubernetes milestone instead.
-# =============================================================================
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+  backend "s3" {
+    bucket         = "cloudvault-terraform-state"
+    key            = "state/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-lock"
+    encrypt        = true
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+}
+
+module "network" {
+  source = "./modules/network"
+}
+
+module "storage" {
+  source      = "./modules/storage"
+  bucket_name = var.bucket_name
+}
+
+module "iam" {
+  source     = "./modules/iam"
+  bucket_arn = module.storage.bucket_arn
+}
+
+module "compute" {
+  source                = "./modules/compute"
+  vpc_id                = module.network.vpc_id
+  public_subnets        = module.network.public_subnets
+  app_subnets           = module.network.app_subnets
+  instance_profile_name = module.iam.instance_profile_name
+}

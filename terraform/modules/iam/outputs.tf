@@ -1,2 +1,3 @@
-# 🧩 modules/iam/outputs.tf — TODO(student).
-# Export only what OTHER modules or the root need to consume from iam.
+output "instance_profile_name" {
+  value = aws_iam_instance_profile.app_profile.name
+}
