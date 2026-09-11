@@ -24,3 +24,4 @@ override.tf.json
 # OS files
 .DS_Store
 Thumbs.db
+k8s/base/secret.yaml

@@ -1,4 +1,15 @@
-# 🧩 base/kustomization.yaml — STUB. No working config.
-# TODO(student): list the base resources here once you've written them.
-# HINTS: what is the point of a base + overlays split? What stays in base (shape)
-#        vs. what an overlay patches (replicas, images, env, ingress host)?
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- configmap.yaml
+- secret.yaml
+- redis.yaml
+- postgres.statefulset.yaml
+- gateway.deployment.yaml
+- auth-service.deployment.yaml
+- files-service.deployment.yaml
+- upload-service.deployment.yaml
+- notification-service.deployment.yaml
+- thumbnail-worker.deployment.yaml
+- web.deployment.yaml
+- ingress.yaml
