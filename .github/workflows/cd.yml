@@ -5,9 +5,15 @@ on:
     branches: [ main ]
   workflow_dispatch: {}
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      INGRESS_URL: ${{ secrets.INGRESS_URL }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,34 +27,32 @@ jobs:
 
       - name: Deploy to cluster via Kustomize
         run: |
-          echo "Applying k8s/overlays/prod..."
+          test -n "$INGRESS_URL" || { echo "INGRESS_URL secret is required" >&2; exit 1; }
           kubectl apply -k k8s/overlays/prod
 
       - name: Wait for rollout status
         run: |
-          echo "Waiting for deployments to become healthy..."
-          kubectl rollout status deployment/gateway --timeout=90s
-          kubectl rollout status deployment/auth-service --timeout=90s
-          kubectl rollout status deployment/files-service --timeout=90s
-          kubectl rollout status deployment/upload-service --timeout=90s
-          kubectl rollout status deployment/notification-service --timeout=90s
-          kubectl rollout status deployment/web --timeout=90s
+          for resource in \
+            deployment/prod-gateway \
+            deployment/prod-auth-service \
+            deployment/prod-files-service \
+            deployment/prod-upload-service \
+            deployment/prod-notification-service \
+            deployment/prod-thumbnail-worker \
+            deployment/prod-web; do
+            kubectl rollout status "$resource" --timeout=180s
+          done
 
       - name: Smoke test
         run: |
-          echo "Running smoke test against Gateway health endpoint..."
-          # In a real environment, replace localhost with the ALB / Ingress URL
-          INGRESS_URL="http://localhost:8080"
-          
-          # Retry loop for smoke test
-          for i in {1..5}; do
-            HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" $INGRESS_URL/healthz || echo "failed")
-            if [ "$HTTP_STATUS" = "200" ]; then
-              echo "Smoke test passed!"
+          for attempt in {1..12}; do
+            response=$(curl --fail --silent --show-error "$INGRESS_URL/healthz" || true)
+            if printf '%s' "$response" | grep -q '"status":"ok"'; then
+              echo "Smoke test passed: $response"
               exit 0
             fi
-            echo "Attempt $i failed. Retrying in 5s..."
-            sleep 5
+            echo "Attempt $attempt failed; retrying in 10s..."
+            sleep 10
           done
           echo "Smoke test failed completely!"
           exit 1
@@ -56,12 +60,16 @@ jobs:
       - name: Rollback on failure
         if: failure()
         run: |
-          echo "Deploy or smoke test failed! Initiating auto-rollback..."
-          kubectl rollout undo deployment/gateway
-          kubectl rollout undo deployment/auth-service
-          kubectl rollout undo deployment/files-service
-          kubectl rollout undo deployment/upload-service
-          kubectl rollout undo deployment/notification-service
-          kubectl rollout undo deployment/web
-          echo "Rollback complete. Exiting with error to fail the pipeline."
+          echo "Deploy or smoke test failed; initiating auto-rollback..."
+          for resource in \
+            deployment/prod-gateway \
+            deployment/prod-auth-service \
+            deployment/prod-files-service \
+            deployment/prod-upload-service \
+            deployment/prod-notification-service \
+            deployment/prod-thumbnail-worker \
+            deployment/prod-web; do
+            kubectl rollout undo "$resource" || true
+          done
+          echo "Rollback requested. Failing the pipeline so the broken release is visible."
           exit 1
