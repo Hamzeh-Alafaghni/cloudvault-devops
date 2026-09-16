@@ -6,13 +6,17 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
-  packages: write
 
 jobs:
   test-and-lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         include:
@@ -32,10 +36,10 @@ jobs:
             path: web
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.4.0
         with:
           node-version: '20'
 
@@ -51,8 +55,16 @@ jobs:
         working-directory: ${{ matrix.path }}
         run: npm test --if-present
 
+      - name: Build application (if present)
+        working-directory: ${{ matrix.path }}
+        run: npm run build --if-present
+
   build-scan-push:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
     needs: [test-and-lint]
     strategy:
       matrix:
@@ -73,13 +85,13 @@ jobs:
             path: web
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Build Docker image
         run: docker build -t cloudvault-${{ matrix.service }}:${{ github.sha }} ./${{ matrix.path }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: 'cloudvault-${{ matrix.service }}:${{ github.sha }}'
           format: 'table'
