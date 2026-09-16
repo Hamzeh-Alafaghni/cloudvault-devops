@@ -95,6 +95,12 @@ spec:
         volumeMounts:
         - name: files-db-data
           mountPath: /var/lib/postgresql/data
+        - name: files-db-init
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: files-db-init
+        configMap:
+          name: files-db-init
   volumeClaimTemplates:
   - metadata:
       name: files-db-data
@@ -113,3 +119,14 @@ spec:
   - port: 5432
   selector:
     app: files-db
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: files-db-init
+data:
+  10-create-notifdb.sql: |
+    CREATE DATABASE notifdb OWNER files;
+
+    \c notifdb
+    CREATE EXTENSION IF NOT EXISTS pgcrypto;

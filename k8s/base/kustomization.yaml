@@ -13,9 +13,9 @@ resources:
 - thumbnail-worker.deployment.yaml
 - web.deployment.yaml
 - ingress.yaml
+- backup.cronjob.yaml
 configMapGenerator:
 - name: scripts-configmap
   files:
-  - backup.sh=../../scripts/backup.sh
-  - restore.sh=../../scripts/restore.sh
-- backup.cronjob.yaml
+  - backup.sh=scripts/backup.sh
+  - restore.sh=scripts/restore.sh

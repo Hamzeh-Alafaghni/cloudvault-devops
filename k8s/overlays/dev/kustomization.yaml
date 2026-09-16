@@ -3,3 +3,21 @@ kind: Kustomization
 resources:
 - ../../base
 namePrefix: dev-
+patches:
+- target:
+    kind: ConfigMap
+    name: cloudvault-config
+  patch: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: cloudvault-config
+    data:
+      AUTH_DB_HOST: "dev-auth-db"
+      FILES_DB_HOST: "dev-files-db"
+      NOTIF_DB_HOST: "dev-files-db"
+      REDIS_HOST: "dev-redis"
+      AUTH_SERVICE_URL: "http://dev-auth-service:3001"
+      FILES_SERVICE_URL: "http://dev-files-service:3002"
+      UPLOAD_SERVICE_URL: "http://dev-upload-service:3003"
+      NOTIFICATION_SERVICE_URL: "http://dev-notification-service:3004"

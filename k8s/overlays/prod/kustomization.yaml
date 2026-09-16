@@ -3,6 +3,24 @@ kind: Kustomization
 resources:
 - ../../base
 namePrefix: prod-
+patches:
+- target:
+    kind: ConfigMap
+    name: cloudvault-config
+  patch: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: cloudvault-config
+    data:
+      AUTH_DB_HOST: "prod-auth-db"
+      FILES_DB_HOST: "prod-files-db"
+      NOTIF_DB_HOST: "prod-files-db"
+      REDIS_HOST: "prod-redis"
+      AUTH_SERVICE_URL: "http://prod-auth-service:3001"
+      FILES_SERVICE_URL: "http://prod-files-service:3002"
+      UPLOAD_SERVICE_URL: "http://prod-upload-service:3003"
+      NOTIFICATION_SERVICE_URL: "http://prod-notification-service:3004"
 replicas:
 - name: gateway
   count: 3

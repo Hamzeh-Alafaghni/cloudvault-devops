@@ -18,7 +18,7 @@ data:
   REDIS_HOST: "redis"
   REDIS_PORT: "6379"
   REDIS_STREAM: "cloudvault:events"
-  S3_ENDPOINT: "http://localstack.default.svc.cluster.local:4566"
+  S3_ENDPOINT: "http://host.docker.internal:4566"
   S3_PUBLIC_ENDPOINT: "http://localhost:4566"
   S3_REGION: "us-east-1"
   S3_BUCKET: "cloudvault"
