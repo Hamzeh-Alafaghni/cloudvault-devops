@@ -19,6 +19,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix:
         include:
           - service: gateway
@@ -69,6 +70,7 @@ jobs:
     needs: [test-and-lint]
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix:
         include:
           - service: gateway
@@ -88,6 +90,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.10.0
 
       - name: Build Docker image
         run: docker build -t cloudvault-${{ matrix.service }}:${{ github.sha }} ./${{ matrix.path }}
