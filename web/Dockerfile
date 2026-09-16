@@ -11,9 +11,8 @@ FROM node@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa3
 WORKDIR /app
 ENV NODE_ENV=production
 RUN apk upgrade --no-cache && apk add --no-cache curl
-RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
-COPY --from=builder --chown=node:node /app ./
-RUN chown -R node:node /app
+COPY --from=builder --chown=node:node /app/dist ./dist
+COPY --chown=node:node server.js ./server.js
 USER node
 EXPOSE 5173
-CMD ["node_modules/.bin/vite", "--host", "0.0.0.0", "--port", "5173"]
+CMD ["node", "server.js"]
