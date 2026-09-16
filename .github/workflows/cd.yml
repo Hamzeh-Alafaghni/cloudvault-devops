@@ -20,6 +20,8 @@ jobs:
 
       - name: Authenticate to cluster
         run: |
+          test -n "${{ secrets.KUBECONFIG }}" || { echo "KUBECONFIG secret is required" >&2; exit 1; }
+          test -n "$INGRESS_URL" || { echo "INGRESS_URL secret is required" >&2; exit 1; }
           echo "Setting up Kubeconfig securely..."
           mkdir -p ~/.kube
           echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
@@ -27,7 +29,6 @@ jobs:
 
       - name: Deploy to cluster via Kustomize
         run: |
-          test -n "$INGRESS_URL" || { echo "INGRESS_URL secret is required" >&2; exit 1; }
           kubectl apply -k k8s/overlays/prod
 
       - name: Wait for rollout status

@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
+      fail-fast: false
       matrix:
         include:
           - service: gateway
@@ -67,6 +68,7 @@ jobs:
       packages: write
     needs: [test-and-lint]
     strategy:
+      fail-fast: false
       matrix:
         include:
           - service: gateway
